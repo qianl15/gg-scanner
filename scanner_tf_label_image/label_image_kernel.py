@@ -1,0 +1,51 @@
+# Mostly taken from: https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/label_image
+import numpy as np
+import tensorflow as tf
+import cv2
+import os
+from scannerpy.stdlib import kernel
+
+##################################################################################################
+# Assume that DNN model is located in PATH_TO_GRAPH with filename 'inception_v3_2016_08_28_frozen.pb'    #
+# Example model can be downloaded from:                                                          #
+# https://storage.googleapis.com/download.tensorflow.org/models/inception_v3_2016_08_28_frozen.pb.tar.gz #
+##################################################################################################
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+PATH_TO_REPO = script_dir
+
+PATH_TO_GRAPH = os.path.join(PATH_TO_REPO, 'data', 'inception_v3_2016_08_28_frozen.pb')
+
+class ImgLabelKernel(kernel.TensorFlowKernel):
+    def build_graph(self):
+        dnn = tf.Graph()
+        with dnn.as_default():
+            od_graph_def = tf.GraphDef()
+            with tf.gfile.GFile(PATH_TO_GRAPH, 'rb') as fid:
+                serialized_graph = fid.read()
+                od_graph_def.ParseFromString(serialized_graph)
+                tf.import_graph_def(od_graph_def, name='')
+        return dnn
+
+    # Evaluate labeling image DNN model on a frame
+    # Return bounding box position, class and score
+    def execute(self, cols):
+        image = cols[0]
+        # Must resize the image to 299 x 299 x 3!
+        image = np.expand_dims(image, axis=0)
+        input_layer = "input:0"
+        output_layer = "InceptionV3/Predictions/Reshape_1:0"
+        image_tensor = self.graph.get_tensor_by_name(input_layer)
+        output_tensor = self.graph.get_tensor_by_name(output_layer)
+        with self.graph.as_default():
+            resized = tf.image.resize_bilinear(image, [299, 299])
+            normalized = tf.divide(tf.subtract(resized, [0]), [255])
+            result_image = self.sess.run(normalized)
+            classes = self.sess.run(
+                output_tensor,
+                feed_dict={image_tensor: result_image})
+            # bundled data format: [box position(x1 y1 x2 y2), box class, box score]
+            bundled_data = classes.argsort()[-5:][::-1]
+            return [bundled_data.tobytes()]
+
+KERNEL = ImgLabelKernel
