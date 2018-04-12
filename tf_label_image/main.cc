@@ -49,7 +49,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/stringpiece.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/io/path.h"
-#include "tensorflow/core/lib/strings/str_util.h"
 #include "tensorflow/core/lib/strings/stringprintf.h"
 #include "tensorflow/core/platform/env.h"
 #include "tensorflow/core/platform/init_main.h"
@@ -138,15 +137,15 @@ Status ReadTensorFromImageFile(const string& file_name, const int input_height,
   // Now try to figure out what kind of file it is and decode it.
   const int wanted_channels = 3;
   tensorflow::Output image_reader;
-  if (tensorflow::str_util::EndsWith(file_name, ".png")) {
+  if (tensorflow::StringPiece(file_name).ends_with(".png")) {
     image_reader = DecodePng(root.WithOpName("png_reader"), file_reader,
                              DecodePng::Channels(wanted_channels));
-  } else if (tensorflow::str_util::EndsWith(file_name, ".gif")) {
+  } else if (tensorflow::StringPiece(file_name).ends_with(".gif")) {
     // gif decoder returns 4-D tensor, remove the first dim
     image_reader =
         Squeeze(root.WithOpName("squeeze_first_dim"),
                 DecodeGif(root.WithOpName("gif_reader"), file_reader));
-  } else if (tensorflow::str_util::EndsWith(file_name, ".bmp")) {
+  } else if (tensorflow::StringPiece(file_name).ends_with(".bmp")) {
     image_reader = DecodeBmp(root.WithOpName("bmp_reader"), file_reader);
   } else {
     // Assume if it's neither a PNG nor a GIF then it must be a JPEG.
@@ -230,7 +229,8 @@ Status GetTopLabels(const std::vector<Tensor>& outputs, int how_many_labels,
 // Given the output of a model run, and the name of a file containing the labels
 // this prints out the top five highest-scoring values.
 Status PrintTopLabels(const std::vector<Tensor>& outputs,
-                      const string& labels_file_name) {
+                      const string& labels_file_name,
+                      string& out_name) {
   std::vector<string> labels;
   size_t label_count;
   Status read_labels_status =
@@ -245,11 +245,15 @@ Status PrintTopLabels(const std::vector<Tensor>& outputs,
   TF_RETURN_IF_ERROR(GetTopLabels(outputs, how_many_labels, &indices, &scores));
   tensorflow::TTypes<float>::Flat scores_flat = scores.flat<float>();
   tensorflow::TTypes<int32>::Flat indices_flat = indices.flat<int32>();
+
+  std::ofstream outfile(out_name);
   for (int pos = 0; pos < how_many_labels; ++pos) {
     const int label_index = indices_flat(pos);
     const float score = scores_flat(pos);
-    LOG(INFO) << labels[label_index] << " (" << label_index << "): " << score;
+    //LOG(INFO) << labels[label_index] << " (" << label_index << "): " << score;
+    outfile << labels[label_index] << " (" << label_index << "): " << score << '\n';
   }
+  outfile.close();
   return Status::OK();
 }
 
@@ -278,11 +282,27 @@ int main(int argc, char* argv[]) {
   // They define where the graph and input data is located, and what kind of
   // input the model expects. If you train your own model, or use something
   // other than inception_v3, then you'll need to update these.
-  string image = "tensorflow/examples/label_image/data/grace_hopper.jpg";
-  string graph =
-      "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
-  string labels =
-      "tensorflow/examples/label_image/data/imagenet_slim_labels.txt";
+  if (argc != 5) {
+      printf("Usage: %s <image> <.pb> <labels (.txt)> <outfile>\n", argv[0]);
+      return 1;
+  }
+  string image = argv[1];
+  const char *image_flag = "--image=";
+  string im_comb = image_flag + image;
+  argv[1] = &im_comb[0u];
+  string graph = argv[2];
+  const char *graph_flag = "--graph=";
+  string graph_comb = graph_flag + graph;
+  argv[2] = &graph_comb[0u];
+  string labels = argv[3];
+  const char *labels_flag = "--labels=";
+  string labels_comb = labels_flag + labels;
+  argv[3] = &labels_comb[0u];
+  string outfile = argv[4];
+  const char *outfile_flag = "--outfile=";
+  string outfile_comb = outfile_flag + outfile;
+  argv[4] = &outfile_comb[0u];
+
   int32 input_width = 299;
   int32 input_height = 299;
   float input_mean = 0;
@@ -295,6 +315,7 @@ int main(int argc, char* argv[]) {
       Flag("image", &image, "image to be processed"),
       Flag("graph", &graph, "graph to be executed"),
       Flag("labels", &labels, "name of file containing labels"),
+      Flag("outfile", &outfile, "name of output file"),
       Flag("input_width", &input_width, "resize image to this width in pixels"),
       Flag("input_height", &input_height,
            "resize image to this height in pixels"),
@@ -368,7 +389,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Do something interesting with the results we've generated.
-  Status print_status = PrintTopLabels(outputs, labels);
+  Status print_status = PrintTopLabels(outputs, labels, outfile);
   if (!print_status.ok()) {
     LOG(ERROR) << "Running print failed: " << print_status;
     return -1;
