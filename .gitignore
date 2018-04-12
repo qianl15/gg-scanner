@@ -103,3 +103,4 @@ ENV/
 # misc.
 *imagenet_slim_labels.txt
 *inception_v3_2016_08_28_frozen.pb
+*ssd_mobilenet_v1_coco_2017_11_17
