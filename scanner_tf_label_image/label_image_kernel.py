@@ -11,6 +11,13 @@ import pickle
 # Example model can be downloaded from:                                                          #
 # https://storage.googleapis.com/download.tensorflow.org/models/inception_v3_2016_08_28_frozen.pb.tar.gz #
 ##################################################################################################
+# What model to download.
+MODEL_NAME = 'inception_v3_2016_08_28_frozen.pb'
+MODEL_FILE = MODEL_NAME + '.tar.gz'
+DOWNLOAD_BASE = 'https://storage.googleapis.com/download.tensorflow.org/models/'
+
+# List of the strings that is used to add correct label for each box.
+PATH_TO_LABELS = os.path.join(PATH_TO_REPO, 'data', 'imagenet_slim_labels.txt')
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 PATH_TO_REPO = script_dir
@@ -22,6 +29,20 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
         dnn = tf.Graph()
         with dnn.as_default():
             od_graph_def = tf.GraphDef()
+
+            # Download the DNN model if not found in PATH_TO_GRAPH
+            if not os.path.isfile(PATH_TO_GRAPH):
+                print("DNN Model not found, now downloading...")
+                opener = urllib.request.URLopener()
+                opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, MODEL_FILE)
+                tar_file = tarfile.open(MODEL_FILE)
+                for f in tar_file.getmembers():
+                    file_name = os.path.basename(f.name)
+                    if 'inception_v3_2016_08_28_frozen.pb' in file_name:
+                        tar_file.extract(f, os.path.join(PATH_TO_REPO, 'data'))
+                        break
+                print("Successfully downloaded and extracted DNN Model.")
+
             with tf.gfile.GFile(PATH_TO_GRAPH, 'rb') as fid:
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
