@@ -6,6 +6,7 @@ from tqdm import tqdm
 import six.moves.urllib as urllib
 import tarfile
 import pickle
+import tensorflow as tf
 
 from timeit import default_timer as now
 
@@ -26,6 +27,13 @@ DOWNLOAD_BASE = 'http://download.tensorflow.org/models/object_detection/'
 
 # List of the strings that is used to add correct label for each box.
 PATH_TO_LABELS = os.path.join(PATH_TO_REPO, 'data', 'imagenet_slim_labels.txt')
+
+def load_labels(label_file):
+    label = []
+    proto_as_ascii_lines = tf.gfile.GFile(label_file).readlines()
+    for l in proto_as_ascii_lines:
+        label.append(l.rstrip())
+    return label
 
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
@@ -50,7 +58,9 @@ if __name__ == '__main__':
     movie_name = os.path.splitext(os.path.basename(movie_path))[0]
 
     bundled_data_list = []
-    sample_stride = 1
+    sample_stride = 30
+
+    labels = load_labels(PATH_TO_LABELS) # load labels
 
     start = now()
     with Database() as db:
@@ -81,7 +91,7 @@ if __name__ == '__main__':
         )
         [out_table] = db.run(output=output_op, jobs=[job], force=True,
                              pipeline_instances_per_node=1,
-                             work_packet_size=50)
+                             work_packet_size=250)
 
         stop2 = now()
         delta = stop2 - stop
@@ -89,14 +99,23 @@ if __name__ == '__main__':
         print('Extracting data from Scanner output...')
 
         # bundled_data_list is a list of bundled_data
-        # bundled data format: [box position(x1 y1 x2 y2), box class, box score]
+        # bundled data format: [top 5 pair of [class, probability] ]
         bundled_data_list = [pickle.loads(top5)
                              for top5 in tqdm(
                                      out_table.column('bundled_data').load())]
         print('Successfully extracted data from Scanner output!')
-        for row in bundled_data_list:
-            print(row)
 
+    # Print out results to files, one output file for one frame
+    f = open('labeloutput.txt', 'w')
+    for row in bundled_data_list:
+        for pair in row:
+            ind = int(pair[0])
+            prob = pair[1]
+            f.write('{} ({:d}): {:.7f}\n'.format(labels[ind], ind, prob))
+            #print('{} ({:d}): {:.7f}'.format(labels[ind], ind, prob))
+        #print('')
+        f.write('\n')
+    f.close()
     stop3 = now()
     print('Total end-end time: {:.4f}s'.format(stop3 - start))
     print('Successfully completed {:s}.mp4'.format(movie_name))
