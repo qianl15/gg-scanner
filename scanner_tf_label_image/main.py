@@ -64,51 +64,52 @@ if __name__ == '__main__':
     movie_name = os.path.splitext(os.path.basename(movie_path))[0]
 
     bundled_data_list = []
-    sample_stride = 30
+    sample_stride = 1
 
     start = now()
 
-    with Database() as db:
-        [input_table], failed = db.ingest_videos([('example', movie_path)],
-                                                 force=True)
-        stop = now()
-        delta = stop - start
-        print('Time to ingest: {:.4f}s, {} frames'.format(delta, input_table.num_rows()))
+   # with Database() as db:
+    db = Database()
+    [input_table], failed = db.ingest_videos([('example', movie_path)],
+                                             force=True)
+    stop = now()
+    delta = stop - start
+    print('Time to ingest: {:.4f}s, {} frames'.format(delta, input_table.num_rows()))
 
-        db.register_op('ImgLabel',
-                       [('frame', ColumnType.Video)],
-                       ['bundled_data'])
-        kernel_path = script_dir + '/label_image_kernel.py'
-        db.register_python_kernel('ImgLabel', DeviceType.CPU, kernel_path)
-        frame = db.sources.FrameColumn()
-        strided_frame = frame.sample()
+    db.register_op('ImgLabel',
+                   [('frame', ColumnType.Video)],
+                   ['bundled_data'])
+    kernel_path = script_dir + '/label_image_kernel.py'
+    db.register_python_kernel('ImgLabel', DeviceType.CPU, kernel_path)
+    frame = db.sources.FrameColumn()
+    strided_frame = frame.sample()
 
-        # Call the newly created object detect op
-        objdet_frame = db.ops.ImgLabel(frame = strided_frame)
+    # Call the newly created object detect op
+    objdet_frame = db.ops.ImgLabel(frame = strided_frame)
 
-        output_op = db.sinks.Column(columns={'bundled_data': objdet_frame})
-        job = Job(
-            op_args={
-                frame: db.table('example').column('frame'),
-                strided_frame: db.sampler.strided(sample_stride),
-                output_op: 'example_obj_detect',
-            }
-        )
-        [out_table] = db.run(output=output_op, jobs=[job], force=True,
-                             pipeline_instances_per_node=1,
-                             work_packet_size=25)
+    output_op = db.sinks.Column(columns={'bundled_data': objdet_frame})
+    job = Job(
+        op_args={
+            frame: db.table('example').column('frame'),
+            strided_frame: db.sampler.strided(sample_stride),
+            output_op: 'example_obj_detect',
+        }
+    )
+    [out_table] = db.run(output=output_op, jobs=[job], force=True,
+                         pipeline_instances_per_node=1,
+                         work_packet_size=250)
 
-        stop2 = now()
-        delta = stop2 - stop
-        print('Time to analysis: {:.4f}s'.format(delta))
-        print('Extracting data from Scanner output...')
+    stop2 = now()
+    delta = stop2 - stop
+    print('Time to analysis: {:.4f}s'.format(delta))
+    print('Extracting data from Scanner output...')
 
-        # bundled_data_list is a list of bundled_data
-        # bundled data format: [top 5 pair of [class, probability] ]
-        bundled_data_list = [pickle.loads(top5)
-                             for top5 in tqdm(
-                                     out_table.column('bundled_data').load())]
-        print('Successfully extracted data from Scanner output!')
+    # bundled_data_list is a list of bundled_data
+    # bundled data format: [top 5 pair of [class, probability] ]
+    bundled_data_list = [pickle.loads(top5)
+                         for top5 in tqdm(
+                                 out_table.column('bundled_data').load())]
+    print('Successfully extracted data from Scanner output!')
 
     # Print out results to files, one output file for one frame
     labels = load_labels(PATH_TO_LABELS) # load labels
