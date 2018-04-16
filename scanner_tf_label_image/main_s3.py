@@ -1,3 +1,4 @@
+import tensorflow as tf
 from scannerpy import Database, Job, ColumnType, DeviceType
 import os
 import sys
@@ -27,6 +28,13 @@ DOWNLOAD_BASE = 'http://download.tensorflow.org/models/object_detection/'
 # List of the strings that is used to add correct label for each box.
 PATH_TO_LABELS = os.path.join(PATH_TO_REPO, 'data', 'imagenet_slim_labels.txt')
 
+def load_labels(label_file):
+    label = []
+    proto_as_ascii_lines = tf.gfile.GFile(label_file).readlines()
+    for l in proto_as_ascii_lines:
+        label.append(l.rstrip())
+    return label
+
 if __name__ == '__main__':
 #    if len(sys.argv) <= 1:
 #        print('Usage: {:s} path/to/your/video/file.mp4'.format(sys.argv[0]))
@@ -52,8 +60,9 @@ if __name__ == '__main__':
     movie_name = os.path.splitext(os.path.basename(movie_path))[0]
 
     bundled_data_list = []
-    sample_stride = 1
+    sample_stride = 100
 
+    labels = load_labels(PATH_TO_LABELS) # load labels
     start = now()
     with Database(config_path="/home/ubuntu/.scanner_s3.toml") as db:
         [input_table], failed = db.ingest_videos([('example', movie_path)],
@@ -95,9 +104,17 @@ if __name__ == '__main__':
         bundled_data_list = [pickle.loads(top5)
                              for top5 in tqdm(
                                      out_table.column('bundled_data').load())]
-        print('Successfully extracted data from Scanner output!')
-        for row in bundled_data_list:
-            print(row)
+    # Print out results to files, one output file for one frame
+    f = open('labeloutput_s3.txt', 'w')
+    for row in bundled_data_list:
+        for pair in row:
+            ind = int(pair[0])
+            prob = pair[1]
+            f.write('{} ({:d}): {:.7f}\n'.format(labels[ind], ind, prob))
+            #print('{} ({:d}): {:.7f}'.format(labels[ind], ind, prob))
+        #print('')
+        f.write('\n')
+    f.close()
 
     stop3 = now()
     print('Total end-end time: {:.4f}s'.format(stop3 - start))
