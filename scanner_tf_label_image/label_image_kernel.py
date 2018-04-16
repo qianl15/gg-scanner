@@ -67,7 +67,9 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
         resized = tf.image.resize_bilinear(image, [299, 299])
         normalized = tf.divide(tf.subtract(resized, [0]), [255])
         sess = tf.Session()
-        result_image = sess.run(normalized)
+        with sess.as_default():
+            result_image = sess.run(normalized)
+        sess.close()
 
         with self.graph.as_default():
             classes = self.sess.run(
