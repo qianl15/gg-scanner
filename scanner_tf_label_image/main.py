@@ -98,7 +98,7 @@ if __name__ == '__main__':
     )
     [out_table] = db.run(output=output_op, jobs=[job], force=True,
                          pipeline_instances_per_node=1,
-                         work_packet_size=250)
+                         work_packet_size=25)
 
     stop2 = now()
     delta = stop2 - stop
