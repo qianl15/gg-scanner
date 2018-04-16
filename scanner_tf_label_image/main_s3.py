@@ -1,3 +1,8 @@
+# Start virtualenv for tensorflow!
+TF_PATH = "/opt/tensorflow_env/bin/activate_this.py"
+
+execfile(TF_PATH, dict(__file__=TF_PATH))
+
 import tensorflow as tf
 from scannerpy import Database, Job, ColumnType, DeviceType
 import os
@@ -55,7 +60,7 @@ if __name__ == '__main__':
 #
 #    movie_path = sys.argv[1]
 
-    movie_path = "videos/example3_134.mp4"
+    movie_path = "videos/4kvid_chunk6kf.mp4"
     print('Detecting objects in movie {}'.format(movie_path))
     movie_name = os.path.splitext(os.path.basename(movie_path))[0]
 
@@ -92,7 +97,7 @@ if __name__ == '__main__':
         )
         [out_table] = db.run(output=output_op, jobs=[job], force=True,
                              pipeline_instances_per_node=1,
-                             work_packet_size=50)
+                             work_packet_size=25)
 
         stop2 = now()
         delta = stop2 - stop

@@ -1,3 +1,10 @@
+
+# Start virtualenv for tensorflow!
+#TF_PATH = "/home/ubuntu/tensorflow_work/bin/activate_this.py"
+TF_PATH = "/opt/tensorflow_env/bin/activate_this.py"
+execfile(TF_PATH, dict(__file__=TF_PATH))
+
+import tensorflow as tf
 from scannerpy import Database, Job, ColumnType, DeviceType
 import os
 import sys
@@ -6,7 +13,6 @@ from tqdm import tqdm
 import six.moves.urllib as urllib
 import tarfile
 import pickle
-import tensorflow as tf
 
 from timeit import default_timer as now
 
@@ -91,7 +97,7 @@ if __name__ == '__main__':
         )
         [out_table] = db.run(output=output_op, jobs=[job], force=True,
                              pipeline_instances_per_node=1,
-                             work_packet_size=250)
+                             work_packet_size=25)
 
         stop2 = now()
         delta = stop2 - stop
