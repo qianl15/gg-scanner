@@ -66,9 +66,8 @@ if __name__ == '__main__':
     bundled_data_list = []
     sample_stride = 30
 
-    labels = load_labels(PATH_TO_LABELS) # load labels
-
     start = now()
+
     with Database() as db:
         [input_table], failed = db.ingest_videos([('example', movie_path)],
                                                  force=True)
@@ -112,16 +111,17 @@ if __name__ == '__main__':
         print('Successfully extracted data from Scanner output!')
 
     # Print out results to files, one output file for one frame
-    f = open('labeloutput.txt', 'w')
+    labels = load_labels(PATH_TO_LABELS) # load labels
+    count = 0
     for row in bundled_data_list:
+        fileName = 'frame{:06d}.out'.format(count)
+        f = open(fileName, 'w')
         for pair in row:
             ind = int(pair[0])
             prob = pair[1]
             f.write('{} ({:d}): {:.7f}\n'.format(labels[ind], ind, prob))
-            #print('{} ({:d}): {:.7f}'.format(labels[ind], ind, prob))
-        #print('')
-        f.write('\n')
-    f.close()
+        f.close()
+        count += 1
     stop3 = now()
     print('Total end-end time: {:.4f}s'.format(stop3 - start))
     print('Successfully completed {:s}.mp4'.format(movie_name))
