@@ -83,7 +83,8 @@ if __name__ == '__main__':
     db.register_python_kernel('ImgLabel', DeviceType.CPU, kernel_path)
     frame = db.sources.FrameColumn()
     strided_frame = frame.sample()
-
+    #resize to 299*299
+    #resize_frame = db.ops.Resize(frame=strided_frame, width=299, height=299)
     # Call the newly created object detect op
     objdet_frame = db.ops.ImgLabel(frame = strided_frame)
 

@@ -13,6 +13,7 @@ import pickle
 
 import tarfile
 import six.moves.urllib as urllib
+from timeit import default_timer as now
 ##################################################################################################
 # Assume that DNN model is located in PATH_TO_GRAPH with filename 'inception_v3_2016_08_28_frozen.pb'    #
 # Example model can be downloaded from:                                                          #
@@ -55,6 +56,7 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
     # Evaluate labeling image DNN model on a frame
     # Return bounding box position, class and score
     def execute(self, cols):
+        start = now() 
         image = cols[0]
         # Must resize the image to 299 x 299 x 3!
         image = np.expand_dims(image, axis=0)
@@ -62,10 +64,12 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
         output_layer = "InceptionV3/Predictions/Reshape_1:0"
         image_tensor = self.graph.get_tensor_by_name(input_layer)
         output_tensor = self.graph.get_tensor_by_name(output_layer)
+        resized = tf.image.resize_bilinear(image, [299, 299])
+        normalized = tf.divide(tf.subtract(resized, [0]), [255])
+        sess = tf.Session()
+        result_image = sess.run(normalized)
+
         with self.graph.as_default():
-            resized = tf.image.resize_bilinear(image, [299, 299])
-            normalized = tf.divide(tf.subtract(resized, [0]), [255])
-            result_image = self.sess.run(normalized)
             classes = self.sess.run(
                 output_tensor,
                 feed_dict={image_tensor: result_image})
@@ -76,6 +80,8 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
                 bundled_data.append([i, classes[i]])
             bundled_np_data = np.array(bundled_data)
             bundled_bytes_data = pickle.dumps(bundled_np_data)
+            stop = now()
+            print('execute time: {:.4f}s'.format(stop - start))
             return [bundled_bytes_data]
 
 KERNEL = ImgLabelKernel
