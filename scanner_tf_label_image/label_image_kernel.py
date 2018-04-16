@@ -27,9 +27,6 @@ PATH_TO_REPO = '/tmp'
 
 PATH_TO_GRAPH = os.path.join(PATH_TO_REPO, 'data', 'inception_v3_2016_08_28_frozen.pb')
 
-# List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join(PATH_TO_REPO, 'data', 'imagenet_slim_labels.txt')
-
 class ImgLabelKernel(kernel.TensorFlowKernel):
     def build_graph(self):
         dnn = tf.Graph()
