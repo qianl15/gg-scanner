@@ -74,8 +74,8 @@ if __name__ == '__main__':
 
     labels = load_labels(PATH_TO_LABELS) # load labels
     start = now()
-#    with Database(config_path="/home/ubuntu/.scanner_s3.toml", workers=['ip-172-31-27-36:5002']) as db:
-    with Database(config_path="/home/ubuntu/.scanner_s3.toml") as db:
+    with Database(config_path="/home/ubuntu/.scanner_s3.toml", workers=['ip-172-31-27-36:5002']) as db:
+#    with Database(config_path="/home/ubuntu/.scanner_s3.toml") as db:
         [input_table], failed = db.ingest_videos([('example', movie_path)],
                                                  force=True)
         stop = now()
