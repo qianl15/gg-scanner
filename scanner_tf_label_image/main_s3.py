@@ -59,8 +59,13 @@ if __name__ == '__main__':
 #        print("Successfully downloaded DNN Model.")
 #
 #    movie_path = sys.argv[1]
+    if len(sys.argv) <= 1:
+        print('Usage: {:s} videos/<file.mp4>'.format(sys.argv[0]))
+        sys.exit(1)
 
-    movie_path = "videos/4kvid_chunk6kf.mp4"
+    movie_path = 'videos/' + sys.argv[1]
+
+    #movie_path = "videos/4kvid_chunk6kf.mp4"
     print('Detecting objects in movie {}'.format(movie_path))
     movie_name = os.path.splitext(os.path.basename(movie_path))[0]
 
@@ -69,6 +74,7 @@ if __name__ == '__main__':
 
     labels = load_labels(PATH_TO_LABELS) # load labels
     start = now()
+#    with Database(config_path="/home/ubuntu/.scanner_s3.toml", workers=['ip-172-31-27-36:5002']) as db:
     with Database(config_path="/home/ubuntu/.scanner_s3.toml") as db:
         [input_table], failed = db.ingest_videos([('example', movie_path)],
                                                  force=True)
@@ -124,3 +130,4 @@ if __name__ == '__main__':
     stop3 = now()
     print('Total end-end time: {:.4f}s'.format(stop3 - start))
     print('Successfully completed {:s}.mp4'.format(movie_name))
+exit(0)

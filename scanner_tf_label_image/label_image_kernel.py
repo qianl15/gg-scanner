@@ -1,6 +1,6 @@
 # Mostly taken from: https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/label_image
 # Start virtualenv for tensorflow!
-TF_PATH = "/home/ubuntu/tensorflow_work/bin/activate_this.py"
+TF_PATH = "/opt/tensorflow_env/bin/activate_this.py"
 
 execfile(TF_PATH, dict(__file__=TF_PATH))
 
@@ -11,6 +11,8 @@ import os
 from scannerpy.stdlib import kernel
 import pickle
 
+import tarfile
+import six.moves.urllib as urllib
 ##################################################################################################
 # Assume that DNN model is located in PATH_TO_GRAPH with filename 'inception_v3_2016_08_28_frozen.pb'    #
 # Example model can be downloaded from:                                                          #
@@ -21,13 +23,12 @@ MODEL_NAME = 'inception_v3_2016_08_28_frozen.pb'
 MODEL_FILE = MODEL_NAME + '.tar.gz'
 DOWNLOAD_BASE = 'https://storage.googleapis.com/download.tensorflow.org/models/'
 
-# List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join(PATH_TO_REPO, 'data', 'imagenet_slim_labels.txt')
-
-script_dir = os.path.dirname(os.path.abspath(__file__))
-PATH_TO_REPO = script_dir
+PATH_TO_REPO = '/tmp'
 
 PATH_TO_GRAPH = os.path.join(PATH_TO_REPO, 'data', 'inception_v3_2016_08_28_frozen.pb')
+
+# List of the strings that is used to add correct label for each box.
+PATH_TO_LABELS = os.path.join(PATH_TO_REPO, 'data', 'imagenet_slim_labels.txt')
 
 class ImgLabelKernel(kernel.TensorFlowKernel):
     def build_graph(self):
