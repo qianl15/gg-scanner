@@ -56,7 +56,7 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
     # Evaluate labeling image DNN model on a frame
     # Return bounding box position, class and score
     def execute(self, cols):
-        start = now() 
+        #start = now()
         image = cols[0]
         # Must resize the image to 299 x 299 x 3!
         image = np.expand_dims(image, axis=0)
@@ -82,8 +82,8 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
                 bundled_data.append([i, classes[i]])
             bundled_np_data = np.array(bundled_data)
             bundled_bytes_data = pickle.dumps(bundled_np_data)
-            stop = now()
-            print('execute time: {:.4f}s'.format(stop - start))
+            #stop = now()
+            #print('execute time: {:.4f}s'.format(stop - start))
             return [bundled_bytes_data]
 
 KERNEL = ImgLabelKernel
