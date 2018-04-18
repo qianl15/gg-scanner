@@ -41,24 +41,6 @@ def load_labels(label_file):
     return label
 
 if __name__ == '__main__':
-#    if len(sys.argv) <= 1:
-#        print('Usage: {:s} path/to/your/video/file.mp4'.format(sys.argv[0]))
-#        sys.exit(1)
-
-#    # Download the DNN model if not found in PATH_TO_GRAPH
-#    if not os.path.isfile(PATH_TO_GRAPH):
-#        print("DNN Model not found, now downloading...")
-#        opener = urllib.request.URLopener()
-#        opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, MODEL_FILE)
-#        tar_file = tarfile.open(MODEL_FILE)
-#        for f in tar_file.getmembers():
-#            file_name = os.path.basename(f.name)
-#            if 'frozen_inference_graph.pb' in file_name:
-#                tar_file.extract(f, PATH_TO_REPO)
-#                break
-#        print("Successfully downloaded DNN Model.")
-#
-#    movie_path = sys.argv[1]
     if len(sys.argv) <= 1:
         print('Usage: {:s} videos/<file.mp4>'.format(sys.argv[0]))
         sys.exit(1)
@@ -75,10 +57,10 @@ if __name__ == '__main__':
     labels = load_labels(PATH_TO_LABELS) # load labels
     start = now()
 
-    workerList = ['ip-172-31-9-210:5002', 'ip-172-31-8-71:5002',
-                  'ip-172-31-7-251:5002', 'ip-172-31-2-180:5002']
-    with Database(config_path="/home/ubuntu/.scanner_s3.toml", workers=workerList) as db:
-    #with Database(config_path="/home/ubuntu/.scanner_s3.toml") as db:
+    # Fill in your workers' ip addresses:port here!
+    workerList = ['worker1:5002', 'worker2:5002']
+
+    with Database(config_path="~/.scanner_s3.toml", workers=workerList) as db:
         [input_table], failed = db.ingest_videos([('example', movie_path)],
                                                  force=True)
         stop = now()
@@ -105,14 +87,15 @@ if __name__ == '__main__':
             }
         )
         [out_table] = db.run(output=output_op, jobs=[job], force=True,
-                             pipeline_instances_per_node=8,
-                             work_packet_size=25)
+                             pipeline_instances_per_node=9,
+                             work_packet_size=50)
 
         stop2 = now()
         delta = stop2 - stop
         print('Time to analysis: {:.4f}s'.format(delta))
         print('Extracting data from Scanner output...')
 
+        out_table.profiler().write_trace('cluster_{}_w{:d}.trace'.format(movie_name, len(workerList)))
         # bundled_data_list is a list of bundled_data
         # bundled data format: [top 5 pair of [class, probability] ]
         bundled_data_list = [pickle.loads(top5)
