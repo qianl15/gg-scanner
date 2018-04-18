@@ -97,13 +97,15 @@ if __name__ == '__main__':
         }
     )
     [out_table] = db.run(output=output_op, jobs=[job], force=True,
-                         pipeline_instances_per_node=8,
-                         work_packet_size=25)
+                         pipeline_instances_per_node=9,
+                         work_packet_size=50)
 
     stop2 = now()
     delta = stop2 - stop
     print('Time to analysis: {:.4f}s'.format(delta))
     print('Extracting data from Scanner output...')
+
+    out_table.profiler().write_trace('local_{}.trace'.format(movie_name))
 
     # bundled_data_list is a list of bundled_data
     # bundled data format: [top 5 pair of [class, probability] ]
