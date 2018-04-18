@@ -1,0 +1,11 @@
+[storage]
+type = "s3"
+db_path = "scanner_db"
+bucket = "XXX"
+region = "us-west-2"
+endpoint = "s3.dualstack.us-west-2.amazonaws.com"
+
+[network]
+worker_port = "5002"
+master = "localhost"
+master_port = "5001"
