@@ -1,6 +1,4 @@
-# Start virtualenv for tensorflow!
-TF_PATH = "/opt/tensorflow_env/bin/activate_this.py"
-
+# This script is used to execute Scanner in cluster mode
 execfile(TF_PATH, dict(__file__=TF_PATH))
 
 import tensorflow as tf
@@ -15,11 +13,11 @@ import pickle
 
 from timeit import default_timer as now
 
-##################################################################################################
+##########################################################################################################
 # The kernel assumes DNN model is in PATH_TO_GRAPH with filename 'inception_v3_2016_08_28_frozen.pb'     #
-# Example model can be downloaded from:                                                          #
+# Example model can be downloaded from:                                                                  #
 # https://storage.googleapis.com/download.tensorflow.org/models/inception_v3_2016_08_28_frozen.pb.tar.gz #
-##################################################################################################
+##########################################################################################################
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 PATH_TO_REPO = script_dir
