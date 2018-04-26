@@ -45,3 +45,12 @@ Time to write output: 0.6929s
 Total end-end time: 328.1579s
 Total time exclude ingest: 319.4602s
 ```
+
+Another run:
+```
+Time to ingest: 8.2216s
+Time to analysis: 311.1346s
+Time to write output: 0.7948s
+Total end-end time: 320.1510s
+Total time exclude ingest: 311.9294s
+```
