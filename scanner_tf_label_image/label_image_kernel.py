@@ -1,9 +1,4 @@
 # Mostly taken from: https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/label_image
-# Start virtualenv for tensorflow!
-TF_PATH = "/opt/tensorflow_env/bin/activate_this.py"
-
-execfile(TF_PATH, dict(__file__=TF_PATH))
-
 import numpy as np
 import tensorflow as tf
 import cv2
