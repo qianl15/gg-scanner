@@ -10,6 +10,7 @@ import tarfile
 import pickle
 
 from timeit import default_timer as now
+from docopt import docopt
 
 ##########################################################################################################
 # The kernel assumes DNN model is in PATH_TO_GRAPH with filename 'inception_v3_2016_08_28_frozen.pb'     #
@@ -36,10 +37,31 @@ def load_labels(label_file):
         label.append(l.rstrip())
     return label
 
+doc = r"""
+Usage: ./main.py [-n <num-instances>] [-b <decode-batch>] [-p] [<input>]
+
+    -h,--help                               show this
+    -n,--num-instances <num-instances>      number of pipeline instances (default: 1)
+    -b,--decode-batch <decode-batch>        decode batch size (default: 75)
+    -p,--show-progress                      show progress bar
+"""
 if __name__ == '__main__':
-    if len(sys.argv) <= 1:
-        print('Usage: {:s} path/to/your/video/file.mp4'.format(sys.argv[0]))
-        sys.exit(1)
+    options = docopt(doc)
+
+    pipeline_instances = 1
+    decode_batch = 75
+    show_progress = False
+
+    if not options['<input>']:
+        print("Please provide one input video file!")
+        exit(1)
+    if options['--num-instances']:
+        pipeline_instances = int(options['--num-instances'])
+    if options['--decode-batch']:
+        decode_batch = int(options['--decode-batch'])
+    if options['--show-progress']:
+        show_progress = True
+    print('Run with pipeline_instances={:d}, decode_batch={:d}'.format(pipeline_instances, decode_batch))
 
     # Download the DNN model if not found in PATH_TO_GRAPH
     if not os.path.isfile(PATH_TO_GRAPH):
@@ -55,7 +77,7 @@ if __name__ == '__main__':
                 break
         print("Successfully downloaded DNN Model.")
 
-    movie_path = sys.argv[1]
+    movie_path = options['<input>']
     print('Detecting objects in movie {}'.format(movie_path))
     movie_name = os.path.splitext(os.path.basename(movie_path))[0]
 
@@ -94,9 +116,9 @@ if __name__ == '__main__':
         }
     )
     [out_table] = db.run(output=output_op, jobs=[job], force=True,
-                         pipeline_instances_per_node=14,
-                         work_packet_size=75,
-                         show_progress=False)
+                         pipeline_instances_per_node=pipeline_instances,
+                         work_packet_size=decode_batch,
+                         show_progress=show_progress)
     stop2 = now()
     delta = stop2 - stop
     print('Time to analysis: {:.4f}s'.format(delta))
