@@ -13,13 +13,13 @@ All files in `scripts/` directory have only been tested on AWS EC2 CPU instances
 `Ubuntu Server 16.04 LTS (HVM), SSD Volume Type - ami-4e79ed36` AMI.
 
 ## How-to's
-Please run in the following order:
-* scripts/0-install_scanner.sh: this script can help you install tensorflow (via pip install) and scanner (commit 4776102, under home directory).
-* scripts/1-prepare.sh: this script will download the video files and extract under your home directory.
-* scripts/run_scanner_tf.sh <num_instances (default: 1)> <decode_batch (default: 75)>: this script will run video analysis experiment.
+Please run scripts in `scripts` directory in the following order:
+* [0-install_scanner.sh](scripts/0-install_scanner.sh): this script can help you install tensorflow (via pip install) and scanner (commit 4776102, under home directory).
+* [1-prepare.sh](scripts/1-prepare.sh): this script will download the video files and extract under your home directory.
+* [run_scanner_tf.sh](scripts/run_scanner_tf.sh) <num_instances (default: 1)> <decode_batch (default: 75)>: this script will run video analysis experiment.
 You can adjust the number of pipeline instances and decode batch size.
 **Before running scanner, you may need to `source ~/.bashrc` to setup environment variables. Note that different machines may have different optimal point.**
-* scripts/clear_output.sh: clean output files.
+* [clear_output.sh](scripts/clear_output.sh): clean output files.
 
 ## Preliminary Results
 
