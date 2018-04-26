@@ -19,8 +19,8 @@ from docopt import docopt
 ##########################################################################################################
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-PATH_TO_REPO = script_dir
-PATH_TO_GRAPH = os.path.join('/tmp', 'data', 'inception_v3_2016_08_28_frozen.pb')
+PATH_TO_DATA = '/tmp/data'
+PATH_TO_GRAPH = os.path.join(PATH_TO_DATA, 'inception_v3_2016_08_28_frozen.pb')
 
 # What model to download.
 MODEL_NAME = 'inception_v3_2016_08_28_frozen.pb'
@@ -28,7 +28,7 @@ MODEL_FILE = MODEL_NAME + '.tar.gz'
 DOWNLOAD_BASE = 'https://storage.googleapis.com/download.tensorflow.org/models/'
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join(PATH_TO_REPO, 'data', 'imagenet_slim_labels.txt')
+PATH_TO_LABELS = os.path.join(PATH_TO_DATA, 'imagenet_slim_labels.txt')
 
 def load_labels(label_file):
     label = []
@@ -73,8 +73,9 @@ if __name__ == '__main__':
         for f in tar_file.getmembers():
             file_name = os.path.basename(f.name)
             if 'inception_v3_2016_08_28_frozen.pb' in file_name:
-                tar_file.extract(f, os.path.join('/tmp', 'data'))
-                break
+                tar_file.extract(f, PATH_TO_DATA)
+            if 'imagenet_slim_labels.txt' in file_name:
+                tar_file.extract(f, PATH_TO_DATA)
         print("Successfully downloaded DNN Model.")
 
     movie_path = options['<input>']
