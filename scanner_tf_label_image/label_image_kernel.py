@@ -33,8 +33,9 @@ class ImgLabelKernel(kernel.TensorFlowKernel):
             if not os.path.isfile(PATH_TO_GRAPH):
                 print("DNN Model not found, now downloading...")
                 opener = urllib.request.URLopener()
-                opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, MODEL_FILE)
-                tar_file = tarfile.open(MODEL_FILE)
+                downloadFile = os.path.join('/tmp', MODEL_FILE)
+                opener.retrieve(DOWNLOAD_BASE + MODEL_FILE, downloadFile)
+                tar_file = tarfile.open(downloadFile)
                 for f in tar_file.getmembers():
                     file_name = os.path.basename(f.name)
                     if 'inception_v3_2016_08_28_frozen.pb' in file_name:
