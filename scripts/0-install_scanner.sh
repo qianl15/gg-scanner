@@ -37,7 +37,9 @@ export PATH=\$HOME/scanner/thirdparty/install/bin:\$PATH
 export PYTHONPATH=\$HOME/scanner/thirdparty/install/lib/python2.7/dist-packages:\$PYTHONPATH
 EOM
 
-source ~/.bashrc
+export LD_LIBRARY_PATH=$HOME/scanner/thirdparty/install/lib:$LD_LIBRARY_PATH
+export PATH=$HOME/scanner/thirdparty/install/bin:$PATH
+export PYTHONPATH=$HOME/scanner/thirdparty/install/lib/python2.7/dist-packages:$PYTHONPATH
 
 cd ${SCANNER_PATH}
 mkdir build
